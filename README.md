@@ -21,19 +21,19 @@ Before you download this repository, make sure that:
 ### Once you **git clone**
 Edit config.json
 ```json
-    {
-        "callback_url": "http://example.com/callback/",
-        "scope": "user-read-email user-read-birthdate user-read-playback-state",
-        "state_msg": "<YOUR FAVOURITE MESSAGE>"
-    }
+{
+    "callback_url": "http://example.com/callback/",
+    "scope": "user-read-email user-read-birthdate user-read-playback-state",
+    "state_msg": "<YOUR FAVOURITE MESSAGE>"
+}
 ```
 
 Edit credentials.json
 ```json
-    {
-        "client_id": "<YOUR CLIENT_ID>",
-        "client_secret": "<YOUR CLIENT_SECRET>"
-    }
+{
+    "client_id": "<YOUR CLIENT_ID>",
+    "client_secret": "<YOUR CLIENT_SECRET>"
+}
 ```
 
 For Spotify OAuth2 scopes, please refer to the [scope](https://developer.spotify.com/web-api/using-scopes/) page. 
@@ -42,8 +42,15 @@ Do not worry about token.json, it is a file that used by system to store token r
 ### After you **git clone**
 On your terminal, run 
 ```bash
-    SHELL> cd ~/python_spotify
-    SHELL> python app.py
+SHELL> cd ~/python_spotify
+SHELL> python app.py
 ```
+
+### After you **python app.y**
+On your browser, type *http://example.com/spotify*
+
+To retrieve your own data, type *http://example.com/spotify/me*
+
+
 ### Pull Request, Anyone?
 contact me at [tangingw.pas@gmail.com](mailto:tangingw.pas@gmail.com)
