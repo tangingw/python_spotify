@@ -58,33 +58,6 @@ def write_file(post_data):
     return redirect(url_for("get_spotify"))
 
 
-def generate_header():
-
-    if not os.path.exists("token.json"):
-
-        return redirect(url_for("authorize"))
-
-    with open("token.json", "r") as file:
-
-        file_data = file.read()
-
-    if not file_data:
-
-        return redirect(url_for("authorize"))
-
-    data = json.loads(file_data)
-
-    if int(time.time()) > data["expiry_time"]:
-
-        return redirect(url_for("refresh_token"))
-
-    headers = {
-        "Authorization": "Bearer " + data["access_token"]
-    }
-
-    return headers, data
-
-
 @app.route("/")
 def hello_world():
 
@@ -131,11 +104,27 @@ def callback():
 @app.route("/spotify")
 def get_spotify():
 
-    headers, data = generate_header()
+    if not os.path.exists("token.json"):
+
+        return redirect(url_for("authorize"))
+
+    with open("token.json", "r") as file:
+
+        file_data = file.read()
+
+    if not file_data:
+
+        return redirect(url_for("authorize"))
+
+    data = json.loads(file_data)
 
     if int(time.time()) > data["expiry_time"]:
 
         return redirect(url_for("refresh_token"))
+
+    headers = {
+        "Authorization": "Bearer " + data["access_token"]
+    }
 
     response = requests.get(BASE_URL + "/v1/me/player", headers=headers)
 
@@ -152,11 +141,28 @@ def get_spotify():
 @app.route("/spotify/me")
 def get_spotify_me():
 
-    headers, data = generate_header()
+    if not os.path.exists("token.json"):
+
+        return redirect(url_for("authorize"))
+
+    with open("token.json", "r") as file:
+
+        file_data = file.read()
+
+    if not file_data:
+
+        return redirect(url_for("authorize"))
+
+    data = json.loads(file_data)
 
     if int(time.time()) > data["expiry_time"]:
 
         return redirect(url_for("refresh_token"))
+
+
+    headers = {
+        "Authorization": "Bearer " + data["access_token"]
+    }
 
     response = requests.get(BASE_URL + "/v1/me", headers=headers)
     myown_data = json.loads(response.text)
