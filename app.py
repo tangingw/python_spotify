@@ -179,7 +179,7 @@ def refresh_token():
 
     if "refresh_token" not in data:
 
-        return redirect(url_for("authorization"))
+        return redirect(url_for("authorize"))
 
     post_data = {
         "grant_type": "refresh_token",

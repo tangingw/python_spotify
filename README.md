@@ -46,7 +46,7 @@ SHELL> cd ~/python_spotify
 SHELL> python app.py
 ```
 
-### After you **python app.y**
+### After you **python app.py**
 On your browser, type *http://example.com/spotify*
 
 To retrieve your own data, type *http://example.com/spotify/me*
