@@ -30,7 +30,7 @@ SCOPE = CONFIG["scope"]
 STATE_MSG = CONFIG["state_msg"]
 
 
-def write_file(post_data):
+def write_file_handler(post_data):
 
     secret_string = base64.b64encode(bytes((CLIENT_ID + ":" + CLIENT_SECRET).encode("utf-8")))
 
@@ -56,6 +56,37 @@ def write_file(post_data):
         file.write(json.dumps(new_response))
 
     return redirect(url_for("get_spotify"))
+
+
+def generic_handler(url, params=None):
+
+    if not os.path.exists("token.json"):
+
+        return redirect(url_for("authorize"))
+
+    with open("token.json", "r") as file:
+
+        file_data = file.read()
+
+    if not file_data:
+
+        return redirect(url_for("authorize"))
+
+    data = json.loads(file_data)
+
+    if int(time.time()) > data["expiry_time"]:
+
+        return redirect(url_for("refresh_token"))
+
+
+    headers = {
+        "Authorization": "Bearer " + data["access_token"]
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+    myown_data = json.loads(response.text)
+
+    return jsonify(myown_data)
 
 
 @app.route("/")
@@ -98,76 +129,7 @@ def callback():
         "redirect_uri": CALLBACK_URL,
     }
 
-    return write_file(post_data)
-
-
-@app.route("/spotify")
-def get_spotify():
-
-    if not os.path.exists("token.json"):
-
-        return redirect(url_for("authorize"))
-
-    with open("token.json", "r") as file:
-
-        file_data = file.read()
-
-    if not file_data:
-
-        return redirect(url_for("authorize"))
-
-    data = json.loads(file_data)
-
-    if int(time.time()) > data["expiry_time"]:
-
-        return redirect(url_for("refresh_token"))
-
-    headers = {
-        "Authorization": "Bearer " + data["access_token"]
-    }
-
-    response = requests.get(BASE_URL + "/v1/me/player", headers=headers)
-
-    if not response.text:
-
-        response = requests.get(BASE_URL + "/v1/me/player/devices", headers=headers)
-
-    my_device = json.loads(response.text)
-
-    #return json.dumps(myown_data, indent=4, ensure_ascii=False)
-    return jsonify(my_device)
-
-
-@app.route("/spotify/me")
-def get_spotify_me():
-
-    if not os.path.exists("token.json"):
-
-        return redirect(url_for("authorize"))
-
-    with open("token.json", "r") as file:
-
-        file_data = file.read()
-
-    if not file_data:
-
-        return redirect(url_for("authorize"))
-
-    data = json.loads(file_data)
-
-    if int(time.time()) > data["expiry_time"]:
-
-        return redirect(url_for("refresh_token"))
-
-
-    headers = {
-        "Authorization": "Bearer " + data["access_token"]
-    }
-
-    response = requests.get(BASE_URL + "/v1/me", headers=headers)
-    myown_data = json.loads(response.text)
-
-    return jsonify(myown_data)
+    return write_file_handler(post_data)
 
 
 @app.route("/refresh_token")
@@ -186,7 +148,45 @@ def refresh_token():
         "refresh_token": data["refresh_token"]
     }
 
-    return write_file(post_data)
+    return write_file_handler(post_data)
+
+
+@app.route("/spotify")
+def get_spotify():
+
+    player_info = generic_handler(BASE_URL + "/v1/me/player")
+
+    if player_info:
+
+        return player_info
+
+    return generic_handler(BASE_URL + "/v1/me/player/devices")
+
+
+@app.route("/spotify/me")
+def get_spotify_me():
+
+    return generic_handler(BASE_URL + "/v1/me")
+
+@app.route("/spotify/me/following")
+def get_my_follow():
+
+    params = {"type": "artist"}
+    return generic_handler(BASE_URL + "/v1/me/following", params=params)
+
+
+@app.route("/spotify/me/playlists")
+def get_my_playlist():
+
+    return generic_handler(BASE_URL + "/v1/me/playlists")
+
+
+@app.route("/spotify/search")
+def search_spotify():
+
+    callback_params = request.args
+
+    return generic_handler(BASE_URL + "/v1/search", params=callback_params)
 
 
 if __name__ == "__main__":
