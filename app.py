@@ -2,6 +2,7 @@ import hashlib
 import base64
 import json
 import os
+import pickle
 import time
 import requests
 from flask import Flask
@@ -30,6 +31,22 @@ SCOPE = CONFIG["scope"]
 STATE_MSG = CONFIG["state_msg"]
 
 
+def store_previous_path(url_path):
+
+    with open("url_path.p", "wb") as pickle_file:
+
+        pickle.dump(url_path, pickle_file)
+
+
+def get_previous_path():
+
+    with open("url_path.p", "rb") as pickle_file:
+
+        previous_path = pickle.load(pickle_file)
+
+    return previous_path
+
+
 def write_file_handler(post_data):
 
     secret_string = base64.b64encode(bytes((CLIENT_ID + ":" + CLIENT_SECRET).encode("utf-8")))
@@ -55,10 +72,13 @@ def write_file_handler(post_data):
 
         file.write(json.dumps(new_response))
 
-    return redirect(url_for("get_spotify"))
+    previous_path = get_previous_path()
+    return redirect(previous_path)
 
 
-def generic_handler(url, params=None):
+def generic_handler(url, current_url, params=None):
+
+    store_previous_path(current_url)
 
     if not os.path.exists("token.json"):
 
@@ -77,7 +97,6 @@ def generic_handler(url, params=None):
     if int(time.time()) > data["expiry_time"]:
 
         return redirect(url_for("refresh_token"))
-
 
     headers = {
         "Authorization": "Bearer " + data["access_token"]
@@ -154,31 +173,39 @@ def refresh_token():
 @app.route("/spotify")
 def get_spotify():
 
-    player_info = generic_handler(BASE_URL + "/v1/me/player")
+    player_info = generic_handler(BASE_URL + "/v1/me/player", request.path)
 
     if player_info:
 
         return player_info
 
-    return generic_handler(BASE_URL + "/v1/me/player/devices")
+    return redirect(url_for("get_my_devices"))
+
+
+@app.route("/spotify/me/devices")
+def get_my_devices():
+
+    return generic_handler(BASE_URL + "/v1/me/player/devices", request.path)
 
 
 @app.route("/spotify/me")
 def get_spotify_me():
 
-    return generic_handler(BASE_URL + "/v1/me")
+
+    return generic_handler(BASE_URL + "/v1/me", request.path)
+
 
 @app.route("/spotify/me/following")
 def get_my_follow():
 
     params = {"type": "artist"}
-    return generic_handler(BASE_URL + "/v1/me/following", params=params)
+    return generic_handler(BASE_URL + "/v1/me/following", request.path, params=params)
 
 
 @app.route("/spotify/me/playlists")
 def get_my_playlist():
 
-    return generic_handler(BASE_URL + "/v1/me/playlists")
+    return generic_handler(BASE_URL + "/v1/me/playlists", request.path)
 
 
 @app.route("/spotify/search")
@@ -186,7 +213,7 @@ def search_spotify():
 
     callback_params = request.args
 
-    return generic_handler(BASE_URL + "/v1/search", params=callback_params)
+    return generic_handler(BASE_URL + "/v1/search", request.path, params=callback_params)
 
 
 if __name__ == "__main__":
